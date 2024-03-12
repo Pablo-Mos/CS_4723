@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput, Platform, ScrollView} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 import { LineChart } from 'react-native-chart-kit';
+import { db } from './config';
+import { ref, onValue } from 'firebase/database';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -20,18 +22,30 @@ export default function App() {
     weeklyWorkouts: '',
   });
 
+  const [todoData, setTodoData] = useState([]);
+  const [waterGoal, setWaterGoal] = useState(0); // Initialize waterGoal state
+
+
+  useEffect(() => {
+    const startCountRef = ref(db, 'totalOz/');
+    onValue(startCountRef, (snapshot) => {
+      const data = snapshot.val();
+      const totalOzValue = data; // Assuming 'totalOz' contains only one value
+      console.log("Fetched data:", totalOzValue); // Log fetched data
+      setTodoData(totalOzValue);
+    });
+  }, []);
+  
+
   const handleInputChange = (text) => {
-    // If backspace was pressed and input value is empty, clear the state
-    if (text === '' || (text.length === 1 && text.charCodeAt(0) === 8)) {
-      setInputValue('');
-    }
     // Ensure text length is 1 and the value is between 0 and 7
-    else if (/^[0-7]$/.test(text)) {
+    if (/^[0-7]$/.test(text)) {
       // Input is valid, update the state with the valid value
       setInputValue(text);
     }
-    // Input is invalid, do not update the state (thus, the input value won't change)
+    // Input is invalid or empty, do not update the state (thus, the input value won't change)
   };
+  
 
   const handleLogin = () => {
     // Add authentication logic here
@@ -39,9 +53,33 @@ export default function App() {
   };
 
   const handleContinue = () => {
+    // Calculate waterGoal based on user inputs
+    let waterGoal = (parseInt(userInfo.weight) / 2) + (32 * (parseInt(userInfo.weeklyWorkouts) / 7));
+    if (userInfo.gender === 'male') {
+      waterGoal *= 1.1;
+    }
+    if (userInfo.age > 25) {
+      waterGoal += (0.005 * userInfo.age) * (userInfo.weight / 2);
+    }
+    if (medicalConditions.includes('POTS') && waterGoal < 85) {
+      waterGoal = 85;
+    }
+    if (medicalConditions.includes('Kidney Stones') && waterGoal < 100) {
+      waterGoal = 100;
+    }
+    if (medicalConditions.includes('UTI') && waterGoal > 100) {
+      waterGoal = 100;
+    }
+    else if (medicalConditions.includes('UTI') && waterGoal < 68) {
+      waterGoal = 68;
+    }
+      console.log('Final waterGoal:', waterGoal); // Log final waterGoal
+    // Set waterGoal in the state
+    setWaterGoal(Math.trunc(waterGoal));
     setOnboardingComplete(true);
   };
-
+  
+  
   const toggleMedicalCondition = (condition) => {
     if (medicalConditions.includes(condition)) {
       setMedicalConditions(medicalConditions.filter((c) => c !== condition));
@@ -53,6 +91,7 @@ export default function App() {
   if (!isLoggedIn) {
     return (
       <View style={styles.container0}>
+        {/* <FetchData todoData={todoData} /> */}
         <Text style={styles.title}>
           <Text style={styles.createText}>  Create{'\n'}</Text>
           <Text style={styles.accountText}>Account</Text>
@@ -96,11 +135,11 @@ export default function App() {
     );
   }
 
-  // Render main content if user is logged in
   return (
-    <MainScreen />
-  );
-}
+    <MainScreen waterGoal={waterGoal} />
+  );  
+
+  }
 
 const OnboardingScreen = ({ userInfo, setUserInfo, handleContinue, toggleMedicalCondition, inputValue, handleInputChange, medicalConditions }) => {
   return (
@@ -156,9 +195,9 @@ const OnboardingScreen = ({ userInfo, setUserInfo, handleContinue, toggleMedical
         <TextInput
           style={styles.inputField}
           keyboardType="numeric"
-          onChangeText={handleInputChange}
           maxLength={1} // Limit input to one character
-          value={inputValue} // Controlled input value
+          value={userInfo.weeklyWorkouts}
+          onChangeText={(weeklyWorkouts) => setUserInfo({...userInfo, weeklyWorkouts})}
         />
       </View>
       <View style={styles.inputRowL}>
@@ -201,15 +240,14 @@ const OnboardingScreen = ({ userInfo, setUserInfo, handleContinue, toggleMedical
   );
 };
 
-const MainScreen = () => {
+const MainScreen = ({ waterGoal }) => {
   const radius = 80;
   const circumference = 2 * Math.PI * radius;
-  const waterGoal = 2000; 
-  const waterDrank = 500;
-  const waterPercentage = (waterDrank / waterGoal) * 100; 
-  const waterText = `${waterDrank}ml / ${waterGoal}ml`;
+  const waterDrank = 50;
+  const waterPercentage = Math.trunc((waterDrank / waterGoal) * 100); // Calculate percentage based on waterGoal prop
+  const waterText = `${waterDrank}oz / ${waterGoal}oz`;
   const waterPercentageText = `${waterPercentage}%`;
-  const strokeDashoffset = circumference * (1 - waterPercentage / 100);
+  const strokeDashoffset = circumference * (1 - waterPercentage / 100)
 
   // Adjusted data array for the line chart
   const chartData = {
@@ -591,6 +629,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
+const FetchData = ({ todoData }) => {
+  console.log("Todo data in FetchData:", todoData); // Log todoData in FetchData
+  return (
+    <View style={styles.container0}>
+      {/* Render the single value */}
+      <Text>{todoData}</Text>
+    </View>
+  );
+};
+
+
+
 
 const getShadowStyles = () => {
   if (Platform.OS === 'android') {
