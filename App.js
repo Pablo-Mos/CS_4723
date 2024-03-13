@@ -7,6 +7,14 @@ import { LineChart } from 'react-native-chart-kit';
 import { db } from './config';
 import { ref, onValue } from 'firebase/database';
 
+const drinkLogData = [
+  { amount: 12.5, time: '6:45 AM' },
+  { amount: 16, time: '9:30 AM' },
+  // { amount: 8, time: '12:15 PM' },
+  // { amount: 20, time: '3:00 PM' },
+];
+
+
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState('');
@@ -22,6 +30,7 @@ export default function App() {
     weeklyWorkouts: '',
   });
 
+ 
   const [todoData, setTodoData] = useState([]);
   const [waterGoal, setWaterGoal] = useState(0); // Initialize waterGoal state
 
@@ -53,13 +62,12 @@ export default function App() {
   };
 
   const handleContinue = () => {
-    // Calculate waterGoal based on user inputs
-    let waterGoal = (parseInt(userInfo.weight) / 2) + (32 * (parseInt(userInfo.weeklyWorkouts) / 7));
+    let waterGoal = (userInfo.weight / 2) + (32 * (userInfo.weeklyWorkouts / 7));
     if (userInfo.gender === 'male') {
       waterGoal *= 1.1;
     }
     if (userInfo.age > 25) {
-      waterGoal += (0.005 * userInfo.age) * (userInfo.weight / 2);
+      waterGoal += (0.005 * (userInfo.age - 25)) * (userInfo.weight / 2);
     }
     if (medicalConditions.includes('POTS') && waterGoal < 85) {
       waterGoal = 85;
@@ -74,7 +82,6 @@ export default function App() {
       waterGoal = 68;
     }
       console.log('Final waterGoal:', waterGoal); // Log final waterGoal
-    // Set waterGoal in the state
     setWaterGoal(Math.trunc(waterGoal));
     setOnboardingComplete(true);
   };
@@ -331,9 +338,7 @@ const MainScreen = ({ waterGoal }) => {
             {waterText}
           </SvgText>
         </Svg>
-        <TouchableOpacity style={[styles.plusButton, getShadowStyles()]} onPress={() => console.log('Plus button pressed')}>
-          <Ionicons name="add-circle-outline" size={48} color="#5DCCFC" strokeWidth={200} />
-        </TouchableOpacity>
+        
         {/* Line Chart */}
         <View style={styles.chartTitleContainer}>
           <Text style={styles.chartTitle}>Hourly Intake</Text>
@@ -368,6 +373,20 @@ const MainScreen = ({ waterGoal }) => {
         <TouchableOpacity style={[styles.shareButton, getShadowStyles()]} onPress={() => console.log('Share button pressed')}>
           <Ionicons name="share-outline" size={24} color="white" style={styles.buttonIcon} />
           <Text style={styles.buttonText}>Share</Text>
+        </TouchableOpacity>
+        <View style={styles.drinkLogSection}>
+          <Text style={[styles.chartTitle, { marginBottom: 16 }]}>Drink Log</Text>
+          {/* List of drink log items */}
+          {drinkLogData.map((item, index) => (
+            <View key={index} style={styles.drinkLogItem}>
+              <Text style={styles.drinkLogTime}>{item.time}</Text>
+              <Text style={styles.drinkLogText}>Water</Text>
+              <Text style={styles.drinkLogAmount}>{item.amount} oz</Text>
+            </View>
+          ))}
+        </View>
+        <TouchableOpacity style={[styles.plusButton, getShadowStyles()]} onPress={() => console.log('Plus button pressed')}>
+          <Ionicons name="add-circle-outline" size={48} color="#5DCCFC" strokeWidth={200} />
         </TouchableOpacity>
         <StatusBar style="auto" />
       </View>
@@ -581,8 +600,8 @@ const styles = StyleSheet.create({
   },
   plusButton: {
     position: 'absolute',
-    bottom: 40,
-    right: 20,
+    bottom: 600,
+    right: 80,
     width: 60,
     height: 60,
     padding: 4,
@@ -628,6 +647,47 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  contentContainer: {
+    width: '100%', // Full width
+    paddingHorizontal: 20, // Horizontal padding to match the container
+  },
+  drinkLogSection: {
+    marginTop: 24, // Add top margin to create space between "Hourly Intake" and "Drink Log"
+    width: '100%', // Full width
+    paddingLeft: 20, // Left padding to align with the content
+    paddingRight: 20, // Left padding to align with the content
+  },
+  drinkLogItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    backgroundColor: '#8EDCFC', // Light blue background color
+    paddingVertical: 12, // Adjust padding as needed
+    paddingHorizontal: 16, // Adjust padding as needed
+    borderRadius: 24, // Add border radius for button-like shape
+    borderWidth: 2,
+    borderColor: '#5DCCFC',
+  },
+  drinkLogText: {
+    fontSize: 16,
+    color: 'white', // White text color
+    fontWeight: 'bold',
+    textAlign: 'center', // Center text horizontally
+    flex: 1, // Take up remaining space
+  },
+  drinkLogTime: {
+    flex: 1, // Take up remaining space
+    textAlign: 'left', // Left align text
+    color: 'white', // White text color
+    paddingLeft: 8, // Left padding to align with the content
+  },
+  drinkLogAmount: {
+    flex: 1, // Take up remaining space
+    textAlign: 'right', // Right align text
+    color: 'white', // White text color
+    paddingRight: 8, // Left padding to align with the content
+  },
+  
 });
 
 const FetchData = ({ todoData }) => {
