@@ -14,6 +14,15 @@ const drinkLogData = [
   // { amount: 20, time: '3:00 PM' },
 ];
 
+const drinkLogDataUpcoming = [
+  { amount: 10.5, time: '12:15 PM' },
+  { amount: 8, time: '2:00 PM' },
+  { amount: 14, time: '6:45 PM' },
+  // { amount: 16, time: '9:30 AM' },
+  // { amount: 8, time: '12:15 PM' },
+  // { amount: 20, time: '3:00 PM' },
+];
+
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -275,7 +284,6 @@ const MainScreen = ({ waterGoal }) => {
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
       <View style={styles.container}>
-        {/* Sticky buttons */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.button, getShadowStyles()]} onPress={() => console.log('Bluetooth button pressed')}>
             <Ionicons name="bluetooth" size={24} color="#5DCCFC" />
@@ -290,10 +298,6 @@ const MainScreen = ({ waterGoal }) => {
             <Ionicons name="person" size={24} color="#5DCCFC" />
           </TouchableOpacity>
         </View>
-
-        {/* Rest of your content */}
-        {/* Water title, SVG, Line Chart, etc. */}
-
         <Text style={styles.waterTitle}>Water</Text>
         <Svg height="200" width="200">
           {/* Ring Circle */}
@@ -382,6 +386,17 @@ const MainScreen = ({ waterGoal }) => {
               <Text style={styles.drinkLogTime}>{item.time}</Text>
               <Text style={styles.drinkLogText}>Water</Text>
               <Text style={styles.drinkLogAmount}>{item.amount} oz</Text>
+            </View>
+          ))}
+        </View>
+        <View style={styles.drinkLogSection}>
+          <Text style={[styles.chartTitle, { marginBottom: 16 }]}>Upcoming</Text>
+          {/* List of drink log items */}
+          {drinkLogDataUpcoming.map((item, index) => (
+            <View key={index} style={styles.drinkLogItemUpcoming}>
+              <Text style={styles.drinkLogTimeUpcoming}>{item.time}</Text>
+              <Text style={styles.drinkLogTextUpcoming}>Water</Text>
+              <Text style={styles.drinkLogAmountUpcoming}>{item.amount} oz</Text>
             </View>
           ))}
         </View>
@@ -576,7 +591,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 12,
     paddingHorizontal: 24,
-    position: 'absolute',
+    // position: 'absolute',
     top: 72, // Adjust the top position as needed
     left: 'auto',
     right: 'auto',
@@ -586,7 +601,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   waterContainer: {
-    position: 'absolute', // Change position to absolute
+    // position: 'absolute', // Change position to absolute
     // top: 160, // Adjust marginTop to position just under the buttons
     alignItems: 'center',
     justifyContent: 'center',
@@ -596,11 +611,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold', // Bold font weight
     marginBottom: 8,
     color: '#5DCCFC', // Light blue color
-    marginTop: 160, // Adjust marginTop to position below the buttons
+    marginTop: 108, // Adjust marginTop to position below the buttons
   },
   plusButton: {
     position: 'absolute',
-    bottom: 600,
+    bottom: 750,
     right: 80,
     width: 60,
     height: 60,
@@ -611,7 +626,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chartContainer: {
-    marginBottom: 40,
+    marginBottom: 36,
     paddingHorizontal: 16,
     width: '90%', // Adjust the width to occupy 90% of the container width
     // alignItems: 'center', // Center the content horizontally
@@ -627,18 +642,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   chartTitle: {
-    marginTop: 24,
+    marginTop: 16,
     fontSize: 16,
     fontWeight: 'bold',
   },
   shareButton: {
+    top: -16,
     flexDirection: 'row',
     paddingVertical: 12,
     paddingHorizontal: 24,
-    // position: 'absolute',
-    // top: 16 + 200 + 16, // 16px below chartContainer
-    // left: '50%',
-    // transform: [{ translateX: -75 }], // Center horizontally
     ...commonButtonStyles,
     backgroundColor: '#5DCCFC', // Same background color as Continue and Login buttons
   },
@@ -652,7 +664,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, // Horizontal padding to match the container
   },
   drinkLogSection: {
-    marginTop: 24, // Add top margin to create space between "Hourly Intake" and "Drink Log"
+    // marginTop: 24, // Add top margin to create space between "Hourly Intake" and "Drink Log"
     width: '100%', // Full width
     paddingLeft: 20, // Left padding to align with the content
     paddingRight: 20, // Left padding to align with the content
@@ -660,8 +672,19 @@ const styles = StyleSheet.create({
   drinkLogItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 8,
     backgroundColor: '#8EDCFC', // Light blue background color
+    paddingVertical: 12, // Adjust padding as needed
+    paddingHorizontal: 16, // Adjust padding as needed
+    borderRadius: 24, // Add border radius for button-like shape
+    borderWidth: 2,
+    borderColor: '#5DCCFC',
+  },
+   drinkLogItemUpcoming: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    backgroundColor: 'transparent', // Light blue background color
     paddingVertical: 12, // Adjust padding as needed
     paddingHorizontal: 16, // Adjust padding as needed
     borderRadius: 24, // Add border radius for button-like shape
@@ -671,6 +694,13 @@ const styles = StyleSheet.create({
   drinkLogText: {
     fontSize: 16,
     color: 'white', // White text color
+    fontWeight: 'bold',
+    textAlign: 'center', // Center text horizontally
+    flex: 1, // Take up remaining space
+  },
+  drinkLogTextUpcoming: {
+    fontSize: 16,
+    color: '#5DCCFC', // White text color
     fontWeight: 'bold',
     textAlign: 'center', // Center text horizontally
     flex: 1, // Take up remaining space
@@ -685,6 +715,18 @@ const styles = StyleSheet.create({
     flex: 1, // Take up remaining space
     textAlign: 'right', // Right align text
     color: 'white', // White text color
+    paddingRight: 8, // Left padding to align with the content
+  },
+  drinkLogTimeUpcoming: {
+    flex: 1, // Take up remaining space
+    textAlign: 'left', // Left align text
+    color: '#5DCCFC', // White text color
+    paddingLeft: 8, // Left padding to align with the content
+  },
+  drinkLogAmountUpcoming: {
+    flex: 1, // Take up remaining space
+    textAlign: 'right', // Right align text
+    color: '#5DCCFC', // White text color
     paddingRight: 8, // Left padding to align with the content
   },
   
