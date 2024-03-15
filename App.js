@@ -275,137 +275,139 @@ const MainScreen = ({ waterGoal }) => {
         strokeWidth: 2, // Width of the line
         withDots: false, // Hide dots
         withShadow: false, // Hide shadow
-        fillShadowGradient: '#FFFFFF', // Fill with white to hide the area where data is 0
+        // fillShadowGradient: '#FFFFFF', // Fill with white to hide the area where data is 0
         fillShadowGradientOpacity: 1, // Set opacity to 1 to completely hide the area where data is 0
       },
     ],
   };
 
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-      <View style={styles.container}>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={[styles.button, getShadowStyles()]} onPress={() => console.log('Bluetooth button pressed')}>
-            <Ionicons name="bluetooth" size={24} color="#5DCCFC" />
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity style={[styles.buttonWide, styles.buttonContainerWide, getShadowStyles()]} onPress={() => console.log('Today button pressed')}>
-          <Ionicons name="calendar-clear-outline" size={24} color="#5DCCFC" style={styles.buttonIcon} />
-          <Text style={[styles.buttonText, { color: "#5DCCFC" }]}>Today</Text>
-        </TouchableOpacity>
-        <View style={[styles.buttonContainer, styles.buttonContainerRight]}>
-          <TouchableOpacity style={[styles.button, getShadowStyles()]} onPress={() => console.log('Person button pressed')}>
-            <Ionicons name="person" size={24} color="#5DCCFC" />
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.waterTitle}>Water</Text>
-        <Svg height="200" width="200">
-          {/* Ring Circle */}
-          <Circle
-            cx="100"
-            cy="100"
-            r={radius}
-            fill="none"
-            stroke="#8EDCFC" // Light blue color
-            strokeWidth="10"
-            opacity={0.5} // Opacity set to 50%
-          />
-          {/* Current Progress Circle */}
-          <Circle
-            cx="100"
-            cy="100"
-            r={radius}
-            fill="none"
-            stroke="#5DCCFC" // Dark blue color
-            strokeWidth="10"
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-            transform="rotate(90, 100, 100) scale(-1, 1) translate(-200, 0)" // Rotate, flip horizontally, and then move
-          />
-          <SvgText
-            x="50%"
-            y="50%"
-            textAnchor="middle"
-            fontSize="32"
-            fill="#5DCCFC" // Dark blue color
-            fontWeight="bold" // Bold font weight
-          >
-            {waterPercentageText}
-          </SvgText>
-          <SvgText
-            x="50%"
-            y="64%"
-            textAnchor="middle"
-            fontSize="10"
-            fill="#141A1E"
-          >
-            {waterText}
-          </SvgText>
-        </Svg>
-        
-        {/* Line Chart */}
-        <View style={styles.chartTitleContainer}>
-          <Text style={styles.chartTitle}>Hourly Intake</Text>
-        </View>
-        <View style={styles.chartContainer}>
-          <View style={{ right: 12 }}>
-            <LineChart
-              data={chartData}
-              width={300}
-              height={200}
-              yAxisSuffix="oz"
-              yAxisInterval={10} // Interval between each y-axis label
-              chartConfig={{
-                backgroundGradientFrom: '#F4F8FB',
-                backgroundGradientTo: '#F4F8FB',
-                decimalPlaces: 0,
-                // DOESNT BELOW, BUT SHOULD BE FIXED
-                yAxisMax: waterGoal,
-                color: (opacity = 1) => `rgba(93, 204, 252, ${opacity})`, // Dark blue color
-                labelColor: (opacity = 1) => `rgba(20, 26, 30, ${opacity})`, // Text color
-                propsForDots: {
-                  r: '3',
-                  strokeWidth: '2',
-                  stroke: '#5DCCFC', // Dark blue color
-                },
-              }}
-              bezier
-              style={styles.chart}
-            />
+    <View style={[{ backgroundColor: '#F4F8FB' }]}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+        <View style={[styles.container]}>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={[styles.button, getShadowStyles()]} onPress={() => console.log('Bluetooth button pressed')}>
+              <Ionicons name="bluetooth" size={24} color="#5DCCFC" />
+            </TouchableOpacity>
           </View>
-        </View>
-        <TouchableOpacity style={[styles.shareButton, getShadowStyles()]} onPress={() => console.log('Share button pressed')}>
-          <Ionicons name="share-outline" size={24} color="white" style={styles.buttonIcon} />
-          <Text style={styles.buttonText}>Share</Text>
-        </TouchableOpacity>
-        <View style={styles.drinkLogSection}>
-          <Text style={[styles.chartTitle, { marginBottom: 16 }]}>Drink Log</Text>
-          {/* List of drink log items */}
-          {drinkLogData.map((item, index) => (
-            <View key={index} style={styles.drinkLogItem}>
-              <Text style={styles.drinkLogTime}>{item.time}</Text>
-              <Text style={styles.drinkLogText}>Water</Text>
-              <Text style={styles.drinkLogAmount}>{item.amount} oz</Text>
+          <TouchableOpacity style={[styles.buttonWide, styles.buttonContainerWide, getShadowStyles()]} onPress={() => console.log('Today button pressed')}>
+            <Ionicons name="calendar-clear-outline" size={24} color="#5DCCFC" style={styles.buttonIcon} />
+            <Text style={[styles.buttonText, { color: "#5DCCFC" }]}>Today</Text>
+          </TouchableOpacity>
+          <View style={[styles.buttonContainer, styles.buttonContainerRight]}>
+            <TouchableOpacity style={[styles.button, getShadowStyles()]} onPress={() => console.log('Person button pressed')}>
+              <Ionicons name="person" size={24} color="#5DCCFC" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.waterTitle}>Water</Text>
+          <Svg height="200" width="200">
+            {/* Ring Circle */}
+            <Circle
+              cx="100"
+              cy="100"
+              r={radius}
+              fill="none"
+              stroke="#8EDCFC" // Light blue color
+              strokeWidth="10"
+              opacity={0.5} // Opacity set to 50%
+            />
+            {/* Current Progress Circle */}
+            <Circle
+              cx="100"
+              cy="100"
+              r={radius}
+              fill="none"
+              stroke="#5DCCFC" // Dark blue color
+              strokeWidth="10"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              transform="rotate(90, 100, 100) scale(-1, 1) translate(-200, 0)" // Rotate, flip horizontally, and then move
+            />
+            <SvgText
+              x="50%"
+              y="50%"
+              textAnchor="middle"
+              fontSize="32"
+              fill="#5DCCFC" // Dark blue color
+              fontWeight="bold" // Bold font weight
+            >
+              {waterPercentageText}
+            </SvgText>
+            <SvgText
+              x="50%"
+              y="64%"
+              textAnchor="middle"
+              fontSize="10"
+              fill="#141A1E"
+            >
+              {waterText}
+            </SvgText>
+          </Svg>
+          
+          {/* Line Chart */}
+          <View style={styles.chartTitleContainer}>
+            <Text style={styles.chartTitle}>Hourly Intake</Text>
+          </View>
+          <View style={styles.chartContainer}>
+            <View style={{ right: 12 }}>
+              <LineChart
+                data={chartData}
+                width={300}
+                height={200}
+                yAxisSuffix="oz"
+                yAxisInterval={10} // Interval between each y-axis label
+                chartConfig={{
+                  backgroundGradientFrom: '#F4F8FB',
+                  backgroundGradientTo: '#F4F8FB',
+                  decimalPlaces: 0,
+                  // DOESNT BELOW, BUT SHOULD BE FIXED
+                  yAxisMax: waterGoal,
+                  color: (opacity = 1) => `rgba(93, 204, 252, ${opacity})`, // Dark blue color
+                  labelColor: (opacity = 1) => `rgba(20, 26, 30, ${opacity})`, // Text color
+                  propsForDots: {
+                    r: '3',
+                    strokeWidth: '2',
+                    stroke: '#5DCCFC', // Dark blue color
+                  },
+                }}
+                bezier
+                style={styles.chart}
+              />
             </View>
-          ))}
+          </View>
+          <TouchableOpacity style={[styles.shareButton, getShadowStyles()]} onPress={() => console.log('Share button pressed')}>
+            <Ionicons name="share-outline" size={24} color="white" style={styles.buttonIcon} />
+            <Text style={styles.buttonText}>Share</Text>
+          </TouchableOpacity>
+          <View style={styles.drinkLogSection}>
+            <Text style={[styles.chartTitle, { marginBottom: 16 }]}>Drink Log</Text>
+            {/* List of drink log items */}
+            {drinkLogData.map((item, index) => (
+              <View key={index} style={styles.drinkLogItem}>
+                <Text style={styles.drinkLogTime}>{item.time}</Text>
+                <Text style={styles.drinkLogText}>Water</Text>
+                <Text style={styles.drinkLogAmount}>{item.amount} oz</Text>
+              </View>
+            ))}
+          </View>
+          <View style={styles.drinkLogSection}>
+            <Text style={[styles.chartTitle, { marginBottom: 16 }]}>Upcoming</Text>
+            {/* List of drink log items */}
+            {drinkLogDataUpcoming.map((item, index) => (
+              <View key={index} style={styles.drinkLogItemUpcoming}>
+                <Text style={styles.drinkLogTimeUpcoming}>{item.time}</Text>
+                <Text style={styles.drinkLogTextUpcoming}>Water</Text>
+                <Text style={styles.drinkLogAmountUpcoming}>{item.amount} oz</Text>
+              </View>
+            ))}
+          </View>
+          <TouchableOpacity style={[styles.plusButton, getShadowStyles()]} onPress={() => console.log('Plus button pressed')}>
+            <Ionicons name="add-circle-outline" size={48} color="#5DCCFC" strokeWidth={200} />
+          </TouchableOpacity>
+          <StatusBar style="auto" />
         </View>
-        <View style={styles.drinkLogSection}>
-          <Text style={[styles.chartTitle, { marginBottom: 16 }]}>Upcoming</Text>
-          {/* List of drink log items */}
-          {drinkLogDataUpcoming.map((item, index) => (
-            <View key={index} style={styles.drinkLogItemUpcoming}>
-              <Text style={styles.drinkLogTimeUpcoming}>{item.time}</Text>
-              <Text style={styles.drinkLogTextUpcoming}>Water</Text>
-              <Text style={styles.drinkLogAmountUpcoming}>{item.amount} oz</Text>
-            </View>
-          ))}
-        </View>
-        <TouchableOpacity style={[styles.plusButton, getShadowStyles()]} onPress={() => console.log('Plus button pressed')}>
-          <Ionicons name="add-circle-outline" size={48} color="#5DCCFC" strokeWidth={200} />
-        </TouchableOpacity>
-        <StatusBar style="auto" />
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
