@@ -15,11 +15,11 @@
 
 #include <WiFi.h>
 // Insert your network credentials
-#define WIFI_SSID "SQ5-Resident"
-// #define WIFI_SSID "GTother"
-#define WIFI_PASSWORD "YamahaNoveltyIcon"
+// #define WIFI_SSID "SQ5-Resident"
+#define WIFI_SSID "GTother"
+// #define WIFI_PASSWORD "YamahaNoveltyIcon"
 
-// #define WIFI_PASSWORD "GeorgeP@1927"
+#define WIFI_PASSWORD "GeorgeP@1927"
 
 /*=================================
           FIREBASE CONFIG
@@ -89,9 +89,12 @@ double currWeight = 0.0;
 double prevWeight = 0.0;
 double GRAMS_TO_OZ = 0.035274;
 double currWeightOz = 0.0;
-double tolerance = 30.0;
+double mintolerance = 30.0;
+double maxtolerance = 500.0;
 double currBottleOz = 0.0;
-float BOTTLE_SCALE = 27.61f;
+bool waterMeasured = false;
+// float BOTTLE_SCALE = 27.61f;
+double CALIBRATION_FACTOR = 7.67263427;
 
 // double waterWeight = 0.0;
 
@@ -179,7 +182,9 @@ void initialTare()
   Serial.println("Calibrating in 5 seconds");
   delay(5000); // wait for the user to place the bottle on a flat surface
   // scale.tare();
-  weight_i2c.setOffset();
+  weight_i2c.tare();
+  weight_i2c.set_scale(CALIBRATION_FACTOR);
+
   StickCP2.Speaker.tone(4000, 500);
   delay(1000);
   Serial.println("Initial tare complete.");
@@ -201,7 +206,7 @@ void secondaryTare()
   Serial.println("Please do not move the bottle until the beep.");
   delay(7500);
   // totalWeight = scale.get_units(10);
-  totalWeight= weight_i2c.getWeight();
+  totalWeight= weight_i2c.get_units(10);
   
   bottleWeight = totalWeight;
   Serial.print("Just got a bottle weight of: ");
@@ -246,14 +251,14 @@ void grabAndPrintWeight()
   canvas.drawString("Calibration", 80, 120);
   // prevWeight = weight;
   // totalWeight = scale.get_units(10);
-    // scale.set_scale(27.61f);  // set scale
-  totalWeight = weight_i2c.getWeight();
+  // weight_i2c.set_scale(4.28f);  // set scale
+  totalWeight = weight_i2c.get_units(10);
   
   currWeight = totalWeight - bottleWeight;
   currWeightOz = currWeight * GRAMS_TO_OZ;
   canvas.setTextSize(3);
   // if (weight != 0) {
-  Serial.printf("currWeightOz: %.2f |bottleWeight: %.2f |totalWeight: %.2f\n\n", currWeightOz, bottleWeight, totalWeight);
+  Serial.printf("currWeight: %.2f |bottleWeight: %.2f |totalWeight: %.2f\ncurrWeightOz: %.2f | prevWeight: %.2f | currBottleOz: %.2f \nTotalOzDrank: %.2f\n\n", currWeight, bottleWeight, totalWeight, currWeightOz, prevWeight, currBottleOz, totalOzDrank);
   // Serial.printf(bottle)
   canvas.drawString(String(currWeightOz, 2) + "g", 80, 60);
 
@@ -265,7 +270,8 @@ void grabAndPrintWeight()
 void tareButtonPress()
 {
   // scale.tare();
-  weight_i2c.setOffset();
+  // weight_i2c.setOffset();
+  weight_i2c.tare();
   canvas.drawString("0g Cal", 80, 120);
   Serial.println("Just tared the scale");
   bottleReset = true;
@@ -289,6 +295,7 @@ void tareButtonPress()
 
   delay(1000);
 }
+
 void calibrateButtonPress()
 {
   long hund_g = 5;
@@ -325,10 +332,12 @@ void calibrateButtonPress()
 void negativeWeight()
 {
   // Serial.println("Negative weight");
-  currBottleOz = currWeightOz;
-  Serial.print("You have currently drank ");
-  Serial.print(currBottleOz);
-  Serial.println(" in this bottle of water.");
+  // if (waterMeasured == false){
+    currBottleOz += (prevWeight - currWeight) * GRAMS_TO_OZ;
+    waterMeasured = true;
+  // }
+  Serial.printf("Drink time! You have drank %.2f in this bottle of water.\n", currBottleOz);
+
 
 }
 void positiveWeight()
@@ -340,9 +349,7 @@ void positiveWeight()
 
   totalOzDrank += currBottleOz;
   currBottleOz = 0.0;
-  Serial.print("Filling the bottle! You have now had a total of ");
-  Serial.print(totalOzDrank);
-  Serial.println(" ozs of water");
+  Serial.printf("Filling the bottle! You have now drank a total of:%.2f ounces of water. \n", totalOzDrank);
 }
 void neutralWeight()
 {
@@ -367,11 +374,11 @@ void loop()
   }
   canvas.pushSprite(0, 0);
   // Serial.printf("Prev Weight: %.2f | CurrWeight: %.2f\n", prevWeight, currWeight);
-  if (prevWeight - currWeight > tolerance)
+  if (prevWeight - currWeight > mintolerance && prevWeight - currWeight < maxtolerance)
   {
     negativeWeight();
   }
-  else if (prevWeight - currWeight < (-tolerance))
+  else if (prevWeight - currWeight < (-mintolerance) && prevWeight-currWeight > (-maxtolerance))
   {
     positiveWeight();
   }
@@ -379,14 +386,17 @@ void loop()
   {
     neutralWeight();
   }
-  delay(1000);
-
+  // printAllValues();
+  delay(5000);
+  prevWeight = currWeight;
   if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
     sendDataPrevMillis = millis();
-    prevWeight = currWeight;
+    // prevWeight = currWeight;
+    // waterMeasured == false;
 
     Serial.println("Sending data to firebase");
+    // Firebase.RTDB.setDouble(
 
     // scale.power_down(); // put the ADC in sleep mode
     delay(1000);
