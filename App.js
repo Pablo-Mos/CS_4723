@@ -39,6 +39,12 @@ export default function App() {
     weeklyWorkouts: '',
   });
 
+  const [showProfile, setShowProfile] = useState(false);
+
+  const toggleProfile = () => {
+    setShowProfile(!showProfile);
+  };
+
  
   const [todoData, setTodoData] = useState([]);
   const [waterGoal, setWaterGoal] = useState(0); // Initialize waterGoal state
@@ -149,11 +155,21 @@ export default function App() {
         medicalConditions={medicalConditions}
       />
     );
+  } else if (showProfile) { // Added condition for showing profile screen
+    return (
+      <ProfileScreen
+        userInfo={userInfo}
+        toggleProfile={toggleProfile}
+      />
+    );
   }
 
   return (
-    <MainScreen waterGoal={waterGoal} />
-  );  
+    <MainScreen
+      waterGoal={waterGoal}
+      toggleProfile={toggleProfile} // Pass toggleProfile as a prop
+    />
+  ); 
 
   }
 
@@ -256,7 +272,7 @@ const OnboardingScreen = ({ userInfo, setUserInfo, handleContinue, toggleMedical
   );
 };
 
-const MainScreen = ({ waterGoal }) => {
+const MainScreen = ({ waterGoal, toggleProfile }) => {
   const radius = 80;
   const circumference = 2 * Math.PI * radius;
   const waterDrank = 50;
@@ -295,9 +311,10 @@ const MainScreen = ({ waterGoal }) => {
             <Text style={[styles.buttonText, { color: "#5DCCFC" }]}>Today</Text>
           </TouchableOpacity>
           <View style={[styles.buttonContainer, styles.buttonContainerRight]}>
-            <TouchableOpacity style={[styles.button, getShadowStyles()]} onPress={() => console.log('Person button pressed')}>
+          <TouchableOpacity
+              style={[styles.button, getShadowStyles()]}   onPress={toggleProfile}>
               <Ionicons name="person" size={24} color="#5DCCFC" />
-            </TouchableOpacity>
+          </TouchableOpacity>
           </View>
           <Text style={styles.waterTitle}>Water</Text>
           <Svg height="200" width="200">
@@ -411,7 +428,24 @@ const MainScreen = ({ waterGoal }) => {
   );
 };
 
-
+const ProfileScreen = ({ userInfo, toggleProfile }) => {
+  return (
+    <View style={styles.container}>
+      <TouchableOpacity style={[styles.circularButton, styles.backButton]} onPress={toggleProfile}>
+        <Ionicons name="chevron-back-outline" size={24} color="#5DCCFC" />
+      </TouchableOpacity>
+      <TouchableOpacity style={[styles.circularButton, styles.settingsButton]} onPress={() => console.log('Settings button pressed')}>
+        <Ionicons name="settings-outline" size={24} color="#5DCCFC" />
+      </TouchableOpacity>
+      <View style={styles.profileCircle}>
+        <View style={styles.profileInitialCircle}>
+          <Text style={styles.initialText}>{userInfo.name.charAt(0)}</Text>
+        </View>
+        <Text style={styles.fullName}>{userInfo.name}</Text>
+      </View>
+    </View>
+  );
+};
 
 const commonButtonStyles = {
   padding: 4,
@@ -731,7 +765,48 @@ const styles = StyleSheet.create({
     color: '#5DCCFC', // White text color
     paddingRight: 8, // Left padding to align with the content
   },
-  
+  circularButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    top: 72,
+  },
+  backButton: {
+    left: 20,
+  },
+  settingsButton: {
+    right: 20,
+  },
+  profileCircle: {
+    paddingTop: 36,
+    marginTop: 100,
+    flex: 1,
+    alignItems: 'center',
+  },
+  profileInitialCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 4,
+    borderColor: '#5DCCFC', // Blue outline color
+    backgroundColor: '#141A1E', // Black filling color
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initialText: {
+    fontSize: 48,
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  fullName: {
+    marginTop: 16,
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });
 
 const FetchData = ({ todoData }) => {
@@ -743,9 +818,6 @@ const FetchData = ({ todoData }) => {
     </View>
   );
 };
-
-
-
 
 const getShadowStyles = () => {
   if (Platform.OS === 'android') {
