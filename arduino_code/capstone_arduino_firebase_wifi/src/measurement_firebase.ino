@@ -165,12 +165,14 @@ void setup()
 
   Serial.println("Deleting nodes");
   // Firebase.RTDB.deleteNode(&fbdo, "/ouncesConsumed");
-  Firebase.RTDB.deleteNode(&fbdo, "/ozBeforeTare");
-  Firebase.RTDB.deleteNode(&fbdo, "/currentOuncesDrank");
-  Firebase.RTDB.deleteNode(&fbdo, "/totalOz");
-  Firebase.RTDB.setDouble(&fbdo, "/ozBeforeTare", 0.0);
-  Firebase.RTDB.setDouble(&fbdo, "/currentOuncesDrank", 0.0);
-  Firebase.RTDB.setDouble(&fbdo, "/totalOz", 0.0);
+  // Firebase.RTDB.deleteNode(&fbdo, "/ozBeforeTare");
+  // Firebase.RTDB.deleteNode(&fbdo, "/currBottleOz");
+  // Firebase.RTDB.deleteNode(&fbdo, "/totalOzDrank");
+  // Firebase.RTDB.deleteNode(&fbdo, "/bottleWeight");
+  // Firebase.RTDB.setDouble(&fbdo, "/ozBeforeTare", 0.0);
+  Firebase.RTDB.setDouble(&fbdo, "/totalOzDrank", 0.0);
+  Firebase.RTDB.setDouble(&fbdo, "/currBottleOz", 0.0);
+  Firebase.RTDB.setDouble(&fbdo, "/bottleWeight", 0.0);
 
   initialTare();
   secondaryTare();
@@ -206,11 +208,21 @@ void secondaryTare()
   Serial.println("Please do not move the bottle until the beep.");
   delay(7500);
   // totalWeight = scale.get_units(10);
-  totalWeight= weight_i2c.get_units(10);
-  
+  totalWeight = weight_i2c.get_units(10);
+
   bottleWeight = totalWeight;
   Serial.print("Just got a bottle weight of: ");
   Serial.println(totalWeight);
+  if (Firebase.RTDB.setDouble(&fbdo, "/bottleWeight", bottleWeight))
+  {
+    Serial.println("just set value of bottleWeight:");
+    prevWeight = weight;
+  }
+  else
+  {
+    Serial.println("FAILED");
+    Serial.println("REASON: " + fbdo.errorReason());
+  }
   StickCP2.Speaker.tone(4000, 500);
   delay(1000);
   StickCP2.Speaker.tone(4000, 500);
@@ -253,7 +265,7 @@ void grabAndPrintWeight()
   // totalWeight = scale.get_units(10);
   // weight_i2c.set_scale(4.28f);  // set scale
   totalWeight = weight_i2c.get_units(10);
-  
+
   currWeight = totalWeight - bottleWeight;
   currWeightOz = currWeight * GRAMS_TO_OZ;
   canvas.setTextSize(3);
@@ -333,19 +345,17 @@ void negativeWeight()
 {
   // Serial.println("Negative weight");
   // if (waterMeasured == false){
-    currBottleOz += (prevWeight - currWeight) * GRAMS_TO_OZ;
-    waterMeasured = true;
+  currBottleOz += (prevWeight - currWeight) * GRAMS_TO_OZ;
+  waterMeasured = true;
   // }
   Serial.printf("Drink time! You have drank %.2f in this bottle of water.\n", currBottleOz);
-
-
 }
 void positiveWeight()
 {
-  
-  //when the weight is positive, we are treating this as an inflow of water.
-  //therefore, the total ounces should be incremented and the current bottle should be set to 0
-  // Serial.println("Positive weight");
+
+  // when the weight is positive, we are treating this as an inflow of water.
+  // therefore, the total ounces should be incremented and the current bottle should be set to 0
+  //  Serial.println("Positive weight");
 
   totalOzDrank += currBottleOz;
   currBottleOz = 0.0;
@@ -378,7 +388,7 @@ void loop()
   {
     negativeWeight();
   }
-  else if (prevWeight - currWeight < (-mintolerance) && prevWeight-currWeight > (-maxtolerance))
+  else if (prevWeight - currWeight < (-mintolerance) && prevWeight - currWeight > (-maxtolerance))
   {
     positiveWeight();
   }
@@ -396,7 +406,55 @@ void loop()
     // waterMeasured == false;
 
     Serial.println("Sending data to firebase");
-    // Firebase.RTDB.setDouble(
+    if (Firebase.RTDB.setDouble(&fbdo, "/totalOzDrank", totalOzDrank))
+    {
+      Serial.println("pushed totalOzDrank");
+    }
+    else
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.errorReason());
+    }
+
+    if (Firebase.RTDB.setDouble(&fbdo, "/totalWeight", totalWeight))
+    {
+      Serial.println("pushed totalWeight");
+    }
+    else
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.errorReason());
+    }
+
+    if (Firebase.RTDB.setDouble(&fbdo, "/currBottleOz", currBottleOz))
+    {
+      Serial.println("pushed currBottleOz");
+    }
+    else
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.errorReason());
+    }
+
+    if (Firebase.RTDB.setDouble(&fbdo, "/prevWeight", prevWeight))
+    {
+      Serial.println("pushed prevWeight");
+    }
+    else
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.errorReason());
+    }
+
+    if (Firebase.RTDB.setDouble(&fbdo, "/currWeight", currWeight))
+    {
+      Serial.println("pushed currWeight");
+    }
+    else
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.errorReason());
+    }
 
     // scale.power_down(); // put the ADC in sleep mode
     delay(1000);
