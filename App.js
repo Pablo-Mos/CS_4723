@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, Platform, ScrollView} from 'react-native';
+import { StyleSheet, Text, Modal, View, TouchableOpacity, TextInput, Platform, ScrollView} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 import { LineChart } from 'react-native-chart-kit';
@@ -40,11 +40,32 @@ export default function App() {
   });
 
   const [showProfile, setShowProfile] = useState(false);
+  const [bluetoothColor, setBluetoothColor] = useState('white');
+  const [bluetoothColor2, setBluetoothColor2] = useState('#5DCCFC');
+
 
   const toggleProfile = () => {
     setShowProfile(!showProfile);
   };
 
+  const [BmodalVisible, setBModalVisible] = useState(false);
+  const [ImodalVisible, setIModalVisible] = useState(false);
+
+  const handleCancel = () => {
+    setBModalVisible(false);
+  };
+  
+  const handleOK = () => {
+    setIModalVisible(false);
+  };
+
+  const handleConfirm = () => {
+    // Logic for connecting to Bluetooth device
+    // Change color of Bluetooth button
+    setBModalVisible(false);
+    setBluetoothColor('#5DCCFC');
+    setBluetoothColor2('white');
+  };
  
   const [todoData, setTodoData] = useState([]);
   const [waterGoal, setWaterGoal] = useState(0); // Initialize waterGoal state
@@ -155,19 +176,29 @@ export default function App() {
         medicalConditions={medicalConditions}
       />
     );
-  } else if (showProfile) { // Added condition for showing profile screen
+  } else if (showProfile) {
     return (
       <ProfileScreen
         userInfo={userInfo}
+        medicalConditions={medicalConditions}
         toggleProfile={toggleProfile}
       />
     );
-  }
-
-  return (
+  } else return (
     <MainScreen
       waterGoal={waterGoal}
-      toggleProfile={toggleProfile} // Pass toggleProfile as a prop
+      toggleProfile={toggleProfile} 
+      setBModalVisible={setBModalVisible}
+      BmodalVisible={BmodalVisible}
+      setIModalVisible={setIModalVisible}
+      ImodalVisible={ImodalVisible}
+      handleCancel={handleCancel}
+      handleOK={handleOK}
+      handleConfirm={handleConfirm}
+      bluetoothColor={bluetoothColor}
+      bluetoothColor2={bluetoothColor2}
+      userInfo={userInfo}
+      medicalConditions={medicalConditions}
     />
   ); 
 
@@ -272,7 +303,7 @@ const OnboardingScreen = ({ userInfo, setUserInfo, handleContinue, toggleMedical
   );
 };
 
-const MainScreen = ({ waterGoal, toggleProfile }) => {
+const MainScreen = ({ waterGoal, userInfo, medicalConditions, toggleProfile, setBModalVisible, BmodalVisible, setIModalVisible, ImodalVisible, handleCancel, handleOK, handleConfirm, bluetoothColor, bluetoothColor2 }) => {
   const radius = 80;
   const circumference = 2 * Math.PI * radius;
   const waterDrank = 50;
@@ -302,9 +333,20 @@ const MainScreen = ({ waterGoal, toggleProfile }) => {
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View style={[styles.container]}>
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={[styles.button, getShadowStyles()]} onPress={() => console.log('Bluetooth button pressed')}>
-              <Ionicons name="bluetooth" size={24} color="#5DCCFC" />
+            <TouchableOpacity style={[styles.button, { backgroundColor: bluetoothColor }, getShadowStyles()]} onPress={() =>setBModalVisible(true)}>
+              <Ionicons name="bluetooth" size={24} color={bluetoothColor2} />
             </TouchableOpacity>
+            <BluetoothModal
+              visible={BmodalVisible}
+              onCancel={handleCancel}
+              onConfirm={handleConfirm}
+            />
+            <InfoModal
+              visible={ImodalVisible}
+              onOK={handleOK}
+              userInfo={userInfo}
+              medicalConditions={medicalConditions}
+            />
           </View>
           <TouchableOpacity style={[styles.buttonWide, styles.buttonContainerWide, getShadowStyles()]} onPress={() => console.log('Today button pressed')}>
             <Ionicons name="calendar-clear-outline" size={24} color="#5DCCFC" style={styles.buttonIcon} />
@@ -316,7 +358,12 @@ const MainScreen = ({ waterGoal, toggleProfile }) => {
               <Ionicons name="person" size={24} color="#5DCCFC" />
           </TouchableOpacity>
           </View>
-          <Text style={styles.waterTitle}>Water</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.waterTitle}>Daily Goal</Text>
+            <TouchableOpacity onPress={() =>setIModalVisible(true)}>
+              <Ionicons name="information-circle-outline" size={20} color="#141A1E" style={{ marginLeft: 4, marginTop: 100 }} />
+            </TouchableOpacity>
+          </View>          
           <Svg height="200" width="200">
             {/* Ring Circle */}
             <Circle
@@ -427,6 +474,44 @@ const MainScreen = ({ waterGoal, toggleProfile }) => {
     </View>
   );
 };
+
+const BluetoothModal = ({ visible, onCancel, onConfirm }) => {
+  return (
+    <Modal visible={visible} animationType="fade" transparent={true}>
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTextTitle}>Connect to Bluetooth attachment?</Text>
+          <View style={styles.buttonContainer2}>
+            <TouchableOpacity style={[styles.buttonBubble2, styles.cancelButton]} onPress={onCancel}>
+              <Text style={styles.CancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.buttonBubble} onPress={onConfirm}>
+              <Text style={styles.ConfirmText}>Confirm</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+const InfoModal = ({ visible, onOK, userInfo, medicalConditions }) => {
+  return (
+    <Modal visible={visible} animationType="fade" transparent={true}>
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTextTitle}>Understanding your Daily Goal</Text>
+          <Text style={styles.modalText}>The amount of water you should drink every day is calculated based on your age ({userInfo.age}), weight ({userInfo.weight} lbs), gender ({userInfo.gender}), activity level ({userInfo.weeklyWorkouts} weekly workouts), and any medical conditions that may affect your hydration{medicalConditions.length > 0 ? ` (${medicalConditions.join(', ')})` : ''}.</Text>
+          <Text style={styles.modalText}>Please consult a medical professional for further questions.</Text>
+          <TouchableOpacity style={styles.buttonBubble} onPress={onOK} >
+            <Text style={styles.ConfirmText}>OK</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 
 const ProfileScreen = ({ userInfo, toggleProfile }) => {
   return (
@@ -806,6 +891,65 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 24,
+    borderWidth: 1,
+    borderColor: '#384144', // Blue outline color
+    alignItems: 'center',
+    width: '75%',
+  },
+  buttonContainer2: {
+    flexDirection: 'row',
+  },
+  buttonBubble: {
+    backgroundColor: '#5DCCFC',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+  },  
+  buttonBubble2: {
+    backgroundColor: 'white',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#5DCCFC',
+  },
+  cancelButton: {
+    marginRight: 64,
+  },
+  CancelText: {
+    color: '#5DCCFC', // Same text color as Continue and Login buttons
+    fontSize: 16,
+  },  
+  ConfirmText: {
+    color: 'white', // Same text color as Continue and Login buttons
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 36,
+    textAlign: 'center',
+  },
+  modalTextTitle: {
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 16,
+    marginBottom: 36,
   },
 });
 
