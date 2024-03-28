@@ -1,27 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, Modal, View, TouchableOpacity, TextInput, Platform, ScrollView} from 'react-native';
+import DateTimePickerModal from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 import { LineChart } from 'react-native-chart-kit';
 import { db } from './config';
 import { ref, onValue } from 'firebase/database';
 
-const drinkLogData = [
-  { amount: 12.5, time: '6:45 AM' },
-  { amount: 16, time: '9:30 AM' },
-  // { amount: 8, time: '12:15 PM' },
-  // { amount: 20, time: '3:00 PM' },
-];
 
-const drinkLogDataUpcoming = [
-  { amount: 10.5, time: '12:15 PM' },
-  { amount: 8, time: '2:00 PM' },
-  { amount: 14, time: '6:45 PM' },
-  // { amount: 16, time: '9:30 AM' },
-  // { amount: 8, time: '12:15 PM' },
-  // { amount: 20, time: '3:00 PM' },
-];
 
 
 export default function App() {
@@ -39,10 +26,29 @@ export default function App() {
     weeklyWorkouts: '',
   });
 
+
+  const drinkLogDataUpcoming = [
+    { amount: 10.5, time: '12:15 PM' },
+    { amount: 8, time: '2:00 PM' },
+    { amount: 14, time: '6:45 PM' },
+  ];
+
+  const [drinkLogData, setDrinkLogData] = useState([
+    { amount: 12.5, time: '6:45 AM' },
+    { amount: 16, time: '9:30 AM' },
+  ]);
+  
+  const AhandleConfirm = () => {
+    // logic for updating totalOz in ring + drink log
+    const timeString = selectedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const newLogItem = { amount: parseFloat(17), time: timeString };
+    setDrinkLogData([...drinkLogData, newLogItem]);
+    setAModalVisible(false);
+  };
+
   const [showProfile, setShowProfile] = useState(false);
   const [bluetoothColor, setBluetoothColor] = useState('white');
   const [bluetoothColor2, setBluetoothColor2] = useState('#5DCCFC');
-
 
   const toggleProfile = () => {
     setShowProfile(!showProfile);
@@ -71,14 +77,11 @@ export default function App() {
     setBluetoothColor2('white');
   };
   
-  const AhandleConfirm = () => {
-    // logic for updating totalOz in ring + drink log
-    setAModalVisible(false);
-  };
- 
   const [todoData, setTodoData] = useState([]);
-  const [waterGoal, setWaterGoal] = useState(0); // Initialize waterGoal state
-
+  const [waterGoal, setWaterGoal] = useState(0);
+  
+  const [selectedTime, setSelectedTime] = useState(new Date());
+  const [showPicker, setShowPicker] = useState(false);
 
   useEffect(() => {
     const startCountRef = ref(db, 'totalOzDrank/');
@@ -196,6 +199,8 @@ export default function App() {
   } else return (
     <MainScreen
       waterGoal={waterGoal}
+      drinkLogData={drinkLogData}
+      drinkLogDataUpcoming={drinkLogDataUpcoming}
       toggleProfile={toggleProfile} 
       setBModalVisible={setBModalVisible}
       BmodalVisible={BmodalVisible}
@@ -203,6 +208,8 @@ export default function App() {
       AmodalVisible={AmodalVisible}
       setIModalVisible={setIModalVisible}
       ImodalVisible={ImodalVisible}
+      selectedTime={selectedTime}
+      showPicker={showPicker}
       handleCancel={handleCancel}
       AhandleCancel={AhandleCancel}
       handleOK={handleOK}
@@ -316,7 +323,7 @@ const OnboardingScreen = ({ userInfo, setUserInfo, handleContinue, toggleMedical
   );
 };
 
-const MainScreen = ({ waterGoal, userInfo, medicalConditions, toggleProfile, setBModalVisible, BmodalVisible, setAModalVisible, AmodalVisible, setIModalVisible, ImodalVisible, handleCancel, AhandleCancel, AhandleConfirm, handleOK, handleConfirm, bluetoothColor, bluetoothColor2 }) => {
+const MainScreen = ({ waterGoal, drinkLogData, drinkLogDataUpcoming, userInfo, medicalConditions, toggleProfile, setBModalVisible, BmodalVisible, setAModalVisible, AmodalVisible, selectedTime, showPicker, setIModalVisible, ImodalVisible, handleCancel, AhandleCancel, AhandleConfirm, handleOK, handleConfirm, bluetoothColor, bluetoothColor2 }) => {
   const radius = 80;
   const circumference = 2 * Math.PI * radius;
   const waterDrank = 50;
@@ -351,7 +358,7 @@ const MainScreen = ({ waterGoal, userInfo, medicalConditions, toggleProfile, set
             </TouchableOpacity>
 
           </View>
-          <TouchableOpacity style={[ styles.buttonWide, getShadowStyles(),{ marginTop: 72 },]} onPress={() =>setAModalVisible(true)}>
+          <TouchableOpacity style={[ styles.buttonWide, getShadowStyles(),{ marginTop: 72 },]} >
             <Ionicons name="calendar-clear-outline" size={24} color="#5DCCFC" style={styles.buttonIcon} />
             <Text style={[styles.buttonText, { color: "#5DCCFC" }]}>Today</Text>
           </TouchableOpacity>
@@ -366,6 +373,8 @@ const MainScreen = ({ waterGoal, userInfo, medicalConditions, toggleProfile, set
               visible={AmodalVisible}
               onCancel={AhandleCancel}
               onConfirm={AhandleConfirm}
+              selectedTime={selectedTime}
+              showPicker={showPicker}
           />
           <InfoModal
             visible={ImodalVisible}
@@ -492,7 +501,7 @@ const MainScreen = ({ waterGoal, userInfo, medicalConditions, toggleProfile, set
               </View>
             ))}
           </View>
-          <TouchableOpacity style={[styles.plusButton, getShadowStyles()]} onPress={() => console.log('Plus button pressed')}>
+          <TouchableOpacity style={[styles.plusButton, getShadowStyles()]} onPress={() =>setAModalVisible(true)}>
             <Ionicons name="add-circle-outline" size={48} color="#5DCCFC" strokeWidth={200} />
           </TouchableOpacity>
           <StatusBar style="auto" />
@@ -522,31 +531,36 @@ const BluetoothModal = ({ visible, onCancel, onConfirm }) => {
   );
 };
 
-const ManudalAddModal = ({ visible, onCancel, onConfirm }) => {
+const ManudalAddModal = ({ visible, onCancel, onConfirm, selectedTime, showPicker, drinkLogData, setDrinkLogData }) => {
   return (
     <Modal visible={visible} animationType="fade" transparent={true}>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTextTitle}>Add Manual Intake</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Time of Day"
-            // value={timeOfDay}
-            // onChangeText={setTimeOfDay}
-          />
-          {/* <TextInput
-            style={styles.input}
-            placeholder="Amount (oz)"
-            // value={amount}
-            // onChangeText={setAmount}
-            keyboardType="numeric"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Liquid Type"
-            // value={liquidType}
-            // onChangeText={setLiquidType}
-          /> */}
+          <View style={styles.inputRow}>
+            <Ionicons name="time-outline" size={24} color="#5DCCFC"/>
+            <Text style={styles.inputCategory}>Time</Text>
+            <DateTimePickerModal
+              isVisible={showPicker}
+              mode="time"
+              value={selectedTime} 
+              onConfirm={(date) => {
+                setSelectedTime(date);
+                // setShowPicker(false);
+              }}
+              // onCancel={() => setShowPicker(false)}
+            />
+          </View>
+          <View style={styles.inputRow}>
+            <Ionicons name="water-outline" size={24} color="#5DCCFC"/>
+            <Text style={styles.inputCategory}>Amount (Oz)</Text>
+            <TextInput
+              style={styles.inputField}
+              keyboardType="numeric"
+              // value={xxx}
+              // onChangeText={xxx}
+            />
+          </View>
           <View style={styles.buttonContainer2}>
             <TouchableOpacity style={[styles.buttonBubble2, styles.cancelButton]} onPress={onCancel}>
               <Text style={styles.CancelText}>Cancel</Text>
