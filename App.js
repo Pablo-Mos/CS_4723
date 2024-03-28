@@ -49,10 +49,15 @@ export default function App() {
   };
 
   const [BmodalVisible, setBModalVisible] = useState(false);
+  const [AmodalVisible, setAModalVisible] = useState(false);
   const [ImodalVisible, setIModalVisible] = useState(false);
 
   const handleCancel = () => {
     setBModalVisible(false);
+  };
+
+  const AhandleCancel = () => {
+    setAModalVisible(false);
   };
   
   const handleOK = () => {
@@ -61,10 +66,14 @@ export default function App() {
 
   const handleConfirm = () => {
     // Logic for connecting to Bluetooth device
-    // Change color of Bluetooth button
     setBModalVisible(false);
     setBluetoothColor('#5DCCFC');
     setBluetoothColor2('white');
+  };
+  
+  const AhandleConfirm = () => {
+    // logic for updating totalOz in ring + drink log
+    setAModalVisible(false);
   };
  
   const [todoData, setTodoData] = useState([]);
@@ -72,7 +81,7 @@ export default function App() {
 
 
   useEffect(() => {
-    const startCountRef = ref(db, 'totalOz/');
+    const startCountRef = ref(db, 'totalOzDrank/');
     onValue(startCountRef, (snapshot) => {
       const data = snapshot.val();
       const totalOzValue = data; // Assuming 'totalOz' contains only one value
@@ -190,11 +199,15 @@ export default function App() {
       toggleProfile={toggleProfile} 
       setBModalVisible={setBModalVisible}
       BmodalVisible={BmodalVisible}
+      setAModalVisible={setAModalVisible}
+      AmodalVisible={AmodalVisible}
       setIModalVisible={setIModalVisible}
       ImodalVisible={ImodalVisible}
       handleCancel={handleCancel}
+      AhandleCancel={AhandleCancel}
       handleOK={handleOK}
       handleConfirm={handleConfirm}
+      AhandleConfirm={AhandleConfirm}
       bluetoothColor={bluetoothColor}
       bluetoothColor2={bluetoothColor2}
       userInfo={userInfo}
@@ -303,7 +316,7 @@ const OnboardingScreen = ({ userInfo, setUserInfo, handleContinue, toggleMedical
   );
 };
 
-const MainScreen = ({ waterGoal, userInfo, medicalConditions, toggleProfile, setBModalVisible, BmodalVisible, setIModalVisible, ImodalVisible, handleCancel, handleOK, handleConfirm, bluetoothColor, bluetoothColor2 }) => {
+const MainScreen = ({ waterGoal, userInfo, medicalConditions, toggleProfile, setBModalVisible, BmodalVisible, setAModalVisible, AmodalVisible, setIModalVisible, ImodalVisible, handleCancel, AhandleCancel, AhandleConfirm, handleOK, handleConfirm, bluetoothColor, bluetoothColor2 }) => {
   const radius = 80;
   const circumference = 2 * Math.PI * radius;
   const waterDrank = 50;
@@ -336,32 +349,46 @@ const MainScreen = ({ waterGoal, userInfo, medicalConditions, toggleProfile, set
             <TouchableOpacity style={[styles.button, { backgroundColor: bluetoothColor }, getShadowStyles()]} onPress={() =>setBModalVisible(true)}>
               <Ionicons name="bluetooth" size={24} color={bluetoothColor2} />
             </TouchableOpacity>
-            <BluetoothModal
-              visible={BmodalVisible}
-              onCancel={handleCancel}
-              onConfirm={handleConfirm}
-            />
-            <InfoModal
-              visible={ImodalVisible}
-              onOK={handleOK}
-              userInfo={userInfo}
-              medicalConditions={medicalConditions}
-            />
+
           </View>
-          <TouchableOpacity style={[styles.buttonWide, styles.buttonContainerWide, getShadowStyles()]} onPress={() => console.log('Today button pressed')}>
+          <TouchableOpacity style={[ styles.buttonWide, getShadowStyles(),{ marginTop: 72 },]} onPress={() =>setAModalVisible(true)}>
             <Ionicons name="calendar-clear-outline" size={24} color="#5DCCFC" style={styles.buttonIcon} />
             <Text style={[styles.buttonText, { color: "#5DCCFC" }]}>Today</Text>
           </TouchableOpacity>
+          
+          {/* modals */}
+          <BluetoothModal
+              visible={BmodalVisible}
+              onCancel={handleCancel}
+              onConfirm={handleConfirm}
+          />
+          <ManudalAddModal
+              visible={AmodalVisible}
+              onCancel={AhandleCancel}
+              onConfirm={AhandleConfirm}
+          />
+          <InfoModal
+            visible={ImodalVisible}
+            onOK={handleOK}
+            userInfo={userInfo}
+            medicalConditions={medicalConditions}
+          />
+     
           <View style={[styles.buttonContainer, styles.buttonContainerRight]}>
-          <TouchableOpacity
-              style={[styles.button, getShadowStyles()]}   onPress={toggleProfile}>
-              <Ionicons name="person" size={24} color="#5DCCFC" />
-          </TouchableOpacity>
+            <TouchableOpacity
+                style={[styles.button, getShadowStyles()]}   onPress={toggleProfile}>
+                <Ionicons name="person" size={24} color="#5DCCFC" />
+            </TouchableOpacity>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center',marginTop: 32, }}>
             <Text style={styles.waterTitle}>Daily Goal</Text>
             <TouchableOpacity onPress={() =>setIModalVisible(true)}>
-              <Ionicons name="information-circle-outline" size={20} color="#141A1E" style={{ marginLeft: 4, marginTop: 100 }} />
+              <Ionicons 
+                name="information-circle" 
+                size={20} 
+                color="#141A1E" 
+                style={{ marginLeft: 4, marginTop: -8, opacity: 0.2 }} 
+              />
             </TouchableOpacity>
           </View>          
           <Svg height="200" width="200">
@@ -495,6 +522,45 @@ const BluetoothModal = ({ visible, onCancel, onConfirm }) => {
   );
 };
 
+const ManudalAddModal = ({ visible, onCancel, onConfirm }) => {
+  return (
+    <Modal visible={visible} animationType="fade" transparent={true}>
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTextTitle}>Add Manual Intake</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Time of Day"
+            // value={timeOfDay}
+            // onChangeText={setTimeOfDay}
+          />
+          {/* <TextInput
+            style={styles.input}
+            placeholder="Amount (oz)"
+            // value={amount}
+            // onChangeText={setAmount}
+            keyboardType="numeric"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Liquid Type"
+            // value={liquidType}
+            // onChangeText={setLiquidType}
+          /> */}
+          <View style={styles.buttonContainer2}>
+            <TouchableOpacity style={[styles.buttonBubble2, styles.cancelButton]} onPress={onCancel}>
+              <Text style={styles.CancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.buttonBubble} onPress={onConfirm}>
+              <Text style={styles.ConfirmText}>Confirm</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 const InfoModal = ({ visible, onOK, userInfo, medicalConditions }) => {
   return (
     <Modal visible={visible} animationType="fade" transparent={true}>
@@ -511,7 +577,6 @@ const InfoModal = ({ visible, onOK, userInfo, medicalConditions }) => {
     </Modal>
   );
 };
-
 
 const ProfileScreen = ({ userInfo, toggleProfile }) => {
   return (
@@ -712,8 +777,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 12,
     paddingHorizontal: 24,
-    // position: 'absolute',
-    top: 72, // Adjust the top position as needed
+    // top: 72, // Adjust the top position as needed
     left: 'auto',
     right: 'auto',
     ...commonButtonStyles,
@@ -732,7 +796,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold', // Bold font weight
     marginBottom: 8,
     color: '#5DCCFC', // Light blue color
-    marginTop: 108, // Adjust marginTop to position below the buttons
+    // marginTop: 60, // Adjust marginTop to position below the buttons
   },
   plusButton: {
     position: 'absolute',
